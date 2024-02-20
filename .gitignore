@@ -1,6 +1,6 @@
 .*/*
 !.github/*
-!.idea/*
+.idea
 Cargo.lock
 target
 os/Cargo.lock
