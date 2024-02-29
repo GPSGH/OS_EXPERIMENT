@@ -1,9 +1,10 @@
 
 #![no_std] //! no need for rust std
 #![no_main]
-#![feature(panic_info_message)]
 #![deny(missing_docs)]
 #![deny(warnings)]
+#![feature(panic_info_message)]
+
 use core::arch::global_asm;
 
 #[macro_use]
@@ -30,7 +31,5 @@ pub fn clear_bss() {
 pub fn rust_main() -> ! {
     clear_bss();
     std_logging::init();
-    println!("[Kernel] Hello, World!");
-    sbi::shutdown(false)
+    panic!("shutdown machine!")
 }
-
