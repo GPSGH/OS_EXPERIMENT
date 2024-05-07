@@ -1,7 +1,10 @@
-// logging tool
+/*！
+
+本模块利用 log crate 为你提供了日志功能，使用方式见 main.rs.
+
+*/
 
 use log::{self, Level, LevelFilter, Log, Metadata, Record};
-use crate::println;
 
 struct SimpleLogger;
 
