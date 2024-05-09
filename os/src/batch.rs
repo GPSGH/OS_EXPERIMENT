@@ -6,8 +6,8 @@ use crate::trap::TrapContext;
 use core::arch::asm;
 use lazy_static::*;
 
-const USER_STACK_SIZE: usize = 4096 * 2;
-const KERNEL_STACK_SIZE: usize = 4096 * 2;
+const USER_STACK_SIZE: usize = 4096 * 2; // 8Kib
+const KERNEL_STACK_SIZE: usize = 4096 * 2; // 8Kib
 const MAX_APP_NUM: usize = 16;
 const APP_BASE_ADDRESS: usize = 0x80400000;
 const APP_SIZE_LIMIT: usize = 0x20000;
@@ -81,12 +81,7 @@ impl AppManager {
         );
         let app_dst = core::slice::from_raw_parts_mut(APP_BASE_ADDRESS as *mut u8, app_src.len());
         app_dst.copy_from_slice(app_src);
-        // Memory fence about fetching the instruction memory
-        // It is guaranteed that a subsequent instruction fetch must
-        // observes all previous writes to the instruction memory.
-        // Therefore, fence.i must be executed after we have loaded
-        // the code of the next app into the instruction memory.
-        // See also: riscv non-priv spec chapter 3, 'Zifencei' extension.
+        // instruction coherence
         asm!("fence.i");
     }
 
@@ -130,7 +125,7 @@ pub fn print_app_info() {
     APP_MANAGER.exclusive_access().print_app_info();
 }
 
-/// run next app
+/// run next app when 
 pub fn run_next_app() -> ! {
     let mut app_manager = APP_MANAGER.exclusive_access();
     let current_app = app_manager.get_current_app();

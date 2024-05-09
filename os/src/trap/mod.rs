@@ -31,6 +31,7 @@ pub fn init() {
         fn __alltraps();
     }
     unsafe {
+        // set stvec point to address of __alltraps
         stvec::write(__alltraps as usize, TrapMode::Direct);
     }
 }
