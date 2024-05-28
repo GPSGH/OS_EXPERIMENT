@@ -1,4 +1,4 @@
-//! Constants used in Kernel
+//! ALL Constants used in Kernel
 
 pub const USER_STACK_SIZE: usize = 4096;
 pub const KERNEL_STACK_SIZE: usize = 4096 * 2;
