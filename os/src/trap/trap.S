@@ -8,8 +8,7 @@
     .section .text
     .globl __alltraps
     .globl __restore
-    # 4 bytes align based on RISC-V s mod 
-    .align 2  
+    .align 2
 __alltraps:
     csrrw sp, sscratch, sp
     # now sp->kernel stack, sscratch->user stack
@@ -39,10 +38,6 @@ __alltraps:
     call trap_handler
 
 __restore:
-    # restore register context
-    # case1: start running app by __restore
-    # case2: back to U after handling trap
-    mv sp, a0
     # now sp->kernel stack(after allocated), sscratch->user stack
     # restore sstatus/sepc
     ld t0, 32*8(sp)
@@ -63,5 +58,4 @@ __restore:
     addi sp, sp, 34*8
     # now sp->kernel stack, sscratch->user stack
     csrrw sp, sscratch, sp
-    # go back to run user app
     sret
