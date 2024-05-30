@@ -47,7 +47,7 @@ impl UserStack {
     }
 }
 
-/// Get base address of app[i].
+/// Get base address of app i.
 fn get_base_i(app_id: usize) -> usize {
     APP_BASE_ADDRESS + app_id * APP_SIZE_LIMIT
 }

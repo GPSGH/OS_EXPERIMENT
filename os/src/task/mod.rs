@@ -125,9 +125,7 @@ impl TaskManager {
             let current = inner.current_task;
             inner.tasks[next].task_status = TaskStatus::Running;
             inner.current_task = next;
-            // the context address of current task
             let current_task_cx_ptr = &mut inner.tasks[current].task_cx as *mut TaskContext;
-            // the context address of next task
             let next_task_cx_ptr = &inner.tasks[next].task_cx as *const TaskContext;
             drop(inner);
             // before this, we should drop local variables that must be dropped manually
