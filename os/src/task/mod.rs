@@ -15,7 +15,6 @@ mod switch;
 mod task;
 
 use crate::config::MAX_APP_NUM;
-// use crate::console::print;
 use crate::loader::{get_num_app, init_app_cx};
 use crate::sbi::shutdown;
 use crate::sync::UPSafeCell;
@@ -48,6 +47,7 @@ pub struct TaskManagerInner {
     tasks: [TaskControlBlock; MAX_APP_NUM],
     /// id of current `Running` task
     current_task: usize,
+    /// the flag of stop calc time
     stop_watch: usize, 
 }
 
@@ -100,21 +100,20 @@ pub fn user_time_end() {
 
 impl TaskManager {
 
-    /// 统计内核时间，从现在开始算的是用户时间
+    /// end of kernel time analysis
     fn user_time_start(&self) {
-        let mut inner = self.inner.exclusive_access();
-        let current = inner.current_task;
+        let mut inner: core::cell::RefMut<TaskManagerInner> = self.inner.exclusive_access();
+        let current: usize = inner.current_task;
         inner.tasks[current].kernel_time += inner.refresh_stop_watch();
     }
 
-    /// 统计用户时间，从现在开始算的是内核时间
+    /// end of user app time analysis
     fn user_time_end(&self) {
         let mut inner = self.inner.exclusive_access();
         let current = inner.current_task;
         inner.tasks[current].user_time += inner.refresh_stop_watch();
     }
-    /// Run the first task in task list.
-    ///
+    /// Run the first task in task list.W
     /// Generally, the first task in task list is an idle task (we call it zero process later).
     /// But in ch3, we load apps statically, so the first task is a real app.
     fn run_first_task(&self) -> ! {
@@ -137,7 +136,8 @@ impl TaskManager {
     fn mark_current_suspended(&self) {
         let mut inner = self.inner.exclusive_access();
         let current: usize = inner.current_task;
-        println!("task::mod.rs -> mark current suspended!");
+
+        // analysis kernel time
         inner.tasks[current].kernel_time += inner.refresh_stop_watch();
         inner.tasks[current].task_status = TaskStatus::Ready;
     }
@@ -146,15 +146,12 @@ impl TaskManager {
     fn mark_current_exited(&self) {
         let mut inner = self.inner.exclusive_access();
         let current = inner.current_task;
-        println!("task::mod.rs -> mark current exited!");
-         // 统计内核时间并输出
+         // analysis kernel time and output info 
         inner.tasks[current].kernel_time += inner.refresh_stop_watch();
-        println!("[task {} exited. user_time: {} ms, kernle_time: {} ms.", current, inner.tasks[current].user_time, inner.tasks[current].kernel_time);
         inner.tasks[current].task_status = TaskStatus::Exited;
     }
 
     /// Find next task to run and return task id.
-    ///
     /// In this case, we only return the first `Ready` task in task list.
     fn find_next_task(&self) -> Option<usize> {
         let inner = self.inner.exclusive_access();
@@ -175,7 +172,7 @@ impl TaskManager {
             let current_task_cx_ptr = &mut inner.tasks[current].task_cx as *mut TaskContext;
             let next_task_cx_ptr = &inner.tasks[next].task_cx as *const TaskContext;
             drop(inner);
-            // before this, we should drop local variables that must be dropped manually
+            // before this, we should drop local variables manually
             unsafe {
                 __switch(current_task_cx_ptr, next_task_cx_ptr);
             }
@@ -189,7 +186,6 @@ impl TaskManager {
 
 /// run first task
 pub fn run_first_task() {
-    println!("task::mod.rs -> run first task !");
     TASK_MANAGER.run_first_task();
 }
 
