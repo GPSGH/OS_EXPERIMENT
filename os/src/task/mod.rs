@@ -20,7 +20,7 @@ use crate::sbi::shutdown;
 use crate::sync::UPSafeCell;
 use crate::timer::*;
 use lazy_static::*;
-use switch::__switch;
+// use switch::__switch;
 use task::{TaskControlBlock, TaskStatus};
 
 pub use context::TaskContext;
@@ -97,9 +97,24 @@ pub fn user_time_start() {
 pub fn user_time_end() {
     TASK_MANAGER.user_time_end()
 }
+/// 切换的开始时间
+static mut SWITCH_TIME_START: usize = 0;
+/// 切换的总时间
+static mut SWITCH_TIME_COUNT: usize = 0;
+unsafe fn __switch(current_task_cx_ptr: *mut TaskContext, next_task_cx_ptr: *const TaskContext) {
+    SWITCH_TIME_START = get_time_us();
+    println!("task start time:{}", SWITCH_TIME_START);
+    switch::__switch(current_task_cx_ptr, next_task_cx_ptr);
+    SWITCH_TIME_COUNT += get_time_us() - SWITCH_TIME_START;
+    println!("task TOTAL time:{}", SWITCH_TIME_COUNT);
+}
+
+fn get_switch_time_count() -> usize {
+    unsafe { SWITCH_TIME_COUNT }
+}
 
 impl TaskManager {
-
+    
     /// end of kernel time analysis
     fn user_time_start(&self) {
         let mut inner: core::cell::RefMut<TaskManagerInner> = self.inner.exclusive_access();
@@ -179,6 +194,8 @@ impl TaskManager {
             // go back to user mode
         } else {
             println!("All applications completed!");
+            // get total time consumed by user apps
+            println!("task switch time: {} us", get_switch_time_count());
             shutdown(false);
         }
     }
